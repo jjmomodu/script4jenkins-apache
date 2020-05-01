@@ -1,0 +1,47 @@
+#!/bin/bash
+
+################################################################
+########         APACHE & JENKINS BUILD SERVER         #########
+################################################################
+
+# Get admin privileges
+
+sudo su
+
+# Install package for server use
+
+# Update the yum cache
+
+yum -y update
+yum -y upgrade
+
+# Install Java
+yum -y install java-1.8.0-openjdk wget
+
+#install git
+yum -y install git
+
+# Install wget to allow jenkins conf
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+
+# Import jenkins from red-hat package
+sudo rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+
+# Install Jenkis server
+yum -y install jenkins
+systemctl start jenkins
+systemctl enable jenkins
+
+# Install Firewalld to allow ports
+yum -y install firewalld
+service firewalld start
+firewall-cmd --zone=public --add-port=8080/tcp --permanent
+firewall-cmd --zone=public --add-service=http --permanent
+firewall-cmd --reload
+
+#install httpd web server
+yum -y install httpd
+systemctl enable httpd
+systemctl start httpd
+systemctl restart httpd
+echo "The Momodu Family Are The Best People In This Community from $(hostname -f)" > /var/www/html/index.html
