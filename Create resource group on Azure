@@ -1,0 +1,44 @@
+# Create resource group
+az group create --name jamiumomoduGroupVMM --location eastus
+
+# Create virtual machine
+az vm create \
+    --resource-group jamiumomoduGroupVMM \
+    --name jjtestingVM1 \
+    --image CentOS \
+    --image Win2016Datacenter \
+    --admin-username jjmomodu \
+    --generate-ssh-keys
+
+# Create virtual machine for cloud init
+az group create --name jamiumomoducloudinitGroupAutomated --location eastus
+az vm create \
+    --resource-group jamiumomoducloudinitGroupAutomated \
+    --name jamiuAutomatedVMM \
+    --image CentOS \
+    --admin-username jjmomodu \
+    --generate-ssh-keys \
+    --custom-data cloud-init.txt
+
+# To allow web traffic to reach your VM
+az vm open-port --port 80 --resource-group jamiumomoducloudinitGroupAutomated --name jamiuAutomatedVMM
+
+# Create an Azure Key Vault
+keyvault_name=mykeyvault
+az keyvault create \
+    --resource-group jamiumomoducloudinitGroupAutomated \
+    --name $keyvault_name \
+    --enabled-for-deployment
+
+# Generate certificate and store in Key Vault
+az keyvault certificate create \
+    --vault-name $keyvault_name \
+    --name mycert \
+    --policy "$(az keyvault certificate get-default-policy --output json)"
+
+# Prepare certificate for use with VM
+secret=$(az keyvault secret list-versions \
+          --vault-name $keyvault_name \
+          --name mycert \
+          --query "[?attributes.enabled].id" --output tsv)
+vm_secret=$(az vm secret format --secret "$secret" --output json)
