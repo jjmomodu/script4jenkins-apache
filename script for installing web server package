@@ -1,0 +1,63 @@
+#!/bin/bash
+
+			########===============================================#########
+			########         APACHE & JENKINS BUILD SERVER         #########
+			########===============================================#########
+                 
+			################################################################
+			########         INSTALLING PACKAGE FOR WEBSERVER USE  #########
+			################################################################
+
+
+# Update the yum cache
+	(
+		yum -y update
+		yum -y upgrade
+		yum -y install firefox
+	)
+# Install Java
+		(
+		yum -y install java-1.8.0-openjdk wget
+		)
+#install git
+			(
+			yum -y install git
+			)
+# Install wget to allow jenkins conf
+		(
+		wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+		)
+# Import jenkins from red-hat package
+			(
+			rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+			)
+# Install Jenkins server
+		(
+		yum -y install jenkins
+		systemctl start jenkins
+		systemctl enable jenkins
+		)                
+# Install Firewalld to allow ports
+			(
+			yum -y install firewalld
+			service firewalld start
+			firewall-cmd --zone=public --add-port=8080/tcp --permanent
+			firewall-cmd --zone=public --add-service=http --permanent
+			firewall-cmd --reload
+			)
+# Install Ansible Package
+		(
+		amazon-linux-extras install ansible2 -y
+			wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+		rpm -ivh epel-release-latest-7.noarch.rpm
+			yum repolist
+		yum — enablerepo=epel install ansible
+			yum-config-manager --enable epel
+		)
+#install httpd web server
+			(
+			yum -y install httpd
+				systemctl enable httpdsystemctl start httpd
+			systemctl restart httpd
+echo "Testing httpd/apache page from $(hostname -f)" > /var/www/html/index.html
+			)
